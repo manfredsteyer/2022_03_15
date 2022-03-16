@@ -2,6 +2,7 @@
 /* eslint-disable @angular-eslint/no-empty-lifecycle-method */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
@@ -18,7 +19,7 @@ import { Flight } from '@flight-workspace/flight-lib';
 @Component({
   selector: 'flight-card',
   templateUrl: './flight-card.component.html',
-  // changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FlightCardComponent implements OnInit, OnChanges, OnDestroy {
   @Input() item: Flight | undefined;
@@ -27,7 +28,11 @@ export class FlightCardComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(private element: ElementRef, private zone: NgZone) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    
+    setTimeout(() => this.selectedChange.next(true), 0);
+  
+  }
 
   ngOnChanges(changes: SimpleChanges): void {}
 
@@ -45,13 +50,15 @@ export class FlightCardComponent implements OnInit, OnChanges, OnDestroy {
 
   blink() {
     // Dirty Hack used to visualize the change detector
-    // let originalColor = this.element.nativeElement.firstChild.style.backgroundColor;
-    this.element.nativeElement.firstChild.style.backgroundColor = 'crimson';
-    //              ^----- DOM-Element
-
     this.zone.runOutsideAngular(() => {
       setTimeout(() => {
-        this.element.nativeElement.firstChild.style.backgroundColor = 'white';
+        // let originalColor = this.element.nativeElement.firstChild.style.backgroundColor;
+        this.element.nativeElement.firstChild.style.backgroundColor = 'crimson';
+        //              ^----- DOM-Element
+      });
+
+      setTimeout(() => {
+        this.element.nativeElement.firstChild.style.backgroundColor = this.selected ? 'rgb(204, 197, 185)' : 'white';
       }, 1000);
     });
 

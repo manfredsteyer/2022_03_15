@@ -1,14 +1,19 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { Observable, share } from 'rxjs';
+import { BehaviorSubject, Observable, share } from 'rxjs';
 import { Flight } from '../models/flight';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FlightService {
-  flights: Flight[] = [];
+  
+  // flights: Flight[] = [];
+  private flightSubject = new BehaviorSubject<Flight[]>([]);
+  readonly flights$ = this.flightSubject.asObservable();
+
+
   baseUrl = `http://www.angular.at/api`;
   // baseUrl = `http://localhost:3000`;
 
@@ -17,33 +22,13 @@ export class FlightService {
   constructor(private http: HttpClient) {}
 
   load(from: string, to: string, urgent: boolean): void {
-
-    // Standard: Cold
-    //    1:1, lazy
-    // share(Replay): Hot
-    //    1:n, eager
-
-    //                         +-- connect --+
-    //                         v             |
-    const o = this.find(from, to, urgent).pipe(share());
-    
-
-    setTimeout(() => {
-
-      o.subscribe()
-    }, 7000)
-
-    // o.subscribe();
-
-    // o.subscribe();
-
-    // o.subscribe();
-
-    // o.subscribe();
-
-    o.subscribe({
+ 
+    this.find(from, to, urgent).subscribe({
       next: (flights) => {
-        this.flights = flights;
+
+        // this.flights = flights;
+        this.flightSubject.next(flights);
+
       },
       error: (err) => console.error('Error loading flights', err),
     });
@@ -87,12 +72,21 @@ export class FlightService {
   delay() {
     const ONE_MINUTE = 1000 * 60;
 
-    const oldFlights = this.flights;
+    const oldFlights = this.flightSubject.getValue();
     const oldFlight = oldFlights[0];
     const oldDate = new Date(oldFlight.date);
 
     // Mutable
-    oldDate.setTime(oldDate.getTime() + 15 * ONE_MINUTE);
-    oldFlight.date = oldDate.toISOString();
+    // oldDate.setTime(oldDate.getTime() + 15 * ONE_MINUTE);
+    // oldFlight.date = oldDate.toISOString();
+
+    // Immutables
+
+    const newDate = new Date(oldDate.getTime() + 15 * ONE_MINUTE);
+    const newFlight = {...oldFlight, date: newDate.toISOString() }
+    const newFlights = [newFlight, ...oldFlights.slice(1)];
+
+    this.flightSubject.next(newFlights);
+
   }
 }
